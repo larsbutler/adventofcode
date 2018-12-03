@@ -40,3 +40,8 @@ func SumInts(nums []int) int {
 	}
 	return sum
 }
+
+func AsInt(s string) int {
+	x, _ := strconv.Atoi(s)
+	return x
+}
