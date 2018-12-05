@@ -45,3 +45,7 @@ func AsInt(s string) int {
 	x, _ := strconv.Atoi(s)
 	return x
 }
+
+func AsStr(x int) string {
+	return strconv.Itoa(x)
+}

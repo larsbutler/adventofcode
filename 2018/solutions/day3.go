@@ -71,7 +71,6 @@ func getMaxXY(claims *[]Claim) (int, int) {
 		if claimMaxY > maxY {
 			maxY = claimMaxY
 		}
-		// fmt.Println(claim.id, claim.left, claim.top, claim.width, claim.height)
 	}
 	return maxX, maxY
 }
@@ -109,7 +108,7 @@ func matrixMemberCount(m *[][]int, target int) int {
 }
 
 
-func Day3Part1(input string) string {
+func Day3Part1And2(input string) string {
 	var lines []string = SplitLines(input)
 	// Step1: collect all claims
 	var claims *[]Claim = getClaims(lines)
@@ -118,32 +117,60 @@ func Day3Part1(input string) string {
 	var maxX int = 0
 	var maxY int = 0
 	maxX, maxY = getMaxXY(claims)
-	fmt.Printf("maxX=%d, maxY=%d\n", maxX, maxY)
 
 	// Step3: represent the fabric space as a matrix, initialized with all values to zero
 	var fabric *[][]int = getMatrix(maxX, maxY)
-	printMatrix(fabric)
 
-	fmt.Printf("%v\n", (*claims)[0].Coords())
+	var overlappingClaimIds map[int]int = make(map[int]int)
+	var nonOverlappingClaimIds map[int]int = make(map[int]int)
 
 	// Step4: Start laying out the claims on the fabric, marking
 	// the areas appropriately to indicate overlaps
 	for _, claim := range *claims {
 		var coords []Coord = claim.Coords()
+		var overlaps bool = false
 		for _, coord := range coords {
 			// coord.x, coord.y
-			if (*fabric)[coord.y][coord.x] != 0 {
+			var stakedClaim int = (*fabric)[coord.y][coord.x]
+			if stakedClaim != 0 {
 				// Another claim has already been laid here
 				// Set the value to -1 to indicate an overlap
 				(*fabric)[coord.y][coord.x] = -1
+				// If the stored claim != -1, keep track of that claim id in the
+				// overlapping claims map
+				if stakedClaim != -1 {
+					overlappingClaimIds[stakedClaim] = stakedClaim
+					// Remove it from non overlapping map
+					delete(nonOverlappingClaimIds, stakedClaim)
+				}
+				// No matter what, always store the current claim id in overlapping claims
+				// map
+				overlaps = true
 			} else {
 				// No other claim has yet been laid here
 				// Set the value to the claim ID
 				(*fabric)[coord.y][coord.x] = claim.id
 			}
 		}
+		if overlaps {
+			overlappingClaimIds[claim.id] = claim.id
+		} else {
+			nonOverlappingClaimIds[claim.id] = claim.id
+		}
 	}
-	printMatrix(fabric)
-	fmt.Println(matrixMemberCount(fabric, -1))
-	return ""
+
+	// printMatrix(fabric)
+
+	var part1Solution string = AsStr(matrixMemberCount(fabric, -1))
+	var part2Solution string = ""
+	if len(nonOverlappingClaimIds) == 1 {
+		// Part 2 solution found
+		var k int
+		// Get the first (and only key)
+		for k = range nonOverlappingClaimIds {
+			break
+		}
+		part2Solution = AsStr(k)
+	}
+	return fmt.Sprintf("Part1=%s, Part2=%s\n", part1Solution, part2Solution)
 }
