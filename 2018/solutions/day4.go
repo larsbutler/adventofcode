@@ -25,6 +25,26 @@ type Minutes [60]int
 type GuardDailyMinutes map[Date]*Minutes
 type GuardShifts map[GuardId]GuardDailyMinutes
 
+func MinuteMax(m Minutes) (int, int) {
+	var maxI int = 0
+	var max int = m[0]
+	for i := 1; i < len(m); i++ {
+		if m[i] > max {
+			max = m[i]
+			maxI = i
+		}
+	}
+	return maxI, max
+}
+
+func AddMinutes(a Minutes, b Minutes) Minutes {
+	var result Minutes = Minutes{}
+	for i := 0; i < len(result); i++ {
+		result[i] = a[i] + b[i]
+	}
+	return result
+}
+
 func SumMinutes(m Minutes) int {
 	var sum int = 0
 	for _, x := range m {
@@ -105,6 +125,30 @@ func getMinuteGuardSleepsMost(gs GuardShifts, gid GuardId) int {
 	return maxIndexMinutes(overlapping)
 }
 
+func getGuardWhoSleptMostDuringGivenMinute(gs GuardShifts) (GuardId, int) {
+	var targetGuard GuardId
+	var targetMinute int
+	var maxSoFar int = 0
+
+	for gid, gdm := range gs {
+		var m Minutes = Minutes{}
+		for _, minutes := range gdm {
+			m = AddMinutes(m, *minutes)
+		}
+		// Get the minute where each guard slept the most:
+		var maxI int
+		var max int
+		maxI, max = MinuteMax(m)
+		if max > maxSoFar {
+			targetGuard = gid
+			targetMinute = maxI
+			maxSoFar = max
+		}
+	}
+	fmt.Printf("%v, %v\n", targetGuard, targetMinute)
+	return targetGuard, targetMinute
+}
+
 func storeShift(gs GuardShifts, gid GuardId, date Date, timeAsleep int, timeAwake int) {
 	// Check if guard id already exists
 	if gdm, exists := gs[gid]; !exists {
@@ -148,19 +192,8 @@ func parseTime(s string) (hour int, minute int) {
 	return hour, minute
 }
 
-func Day4Part1(input string) string {
-	// 1. Sort the input by time
-	var lines []string = SplitLines(input)
-	sort.Slice(
-		lines,
-		func(i, j int) bool {
-			return lines[i] < lines[j]
-		},
-	)
-	// 2. Read the guard schedules
-	// guard
-	//	 date
-	//     minutes
+func getGuardShifts(lines []string) GuardShifts {
+
 	var guardShifts GuardShifts = make(map[GuardId]GuardDailyMinutes)
 	var guardId GuardId = 0
 	var timeAsleep int = 0  // time the guards fall asleep
@@ -190,6 +223,39 @@ func Day4Part1(input string) string {
 			storeShift(guardShifts, guardId, date, timeAsleep, timeAwake)
 		}
 	}
+	return guardShifts
+}
+
+func Day4Part2(input string) string {
+	var lines []string = SplitLines(input)
+	sort.Slice(
+		lines,
+		func(i, j int) bool {
+			return lines[i] < lines[j]
+		},
+	)
+	var guardShifts GuardShifts = getGuardShifts(lines)
+
+	// find which guard spent the most time asleep during any given
+	// minute
+	// which guard and which minute?
+	var gid GuardId
+	var minute int
+	gid, minute = getGuardWhoSleptMostDuringGivenMinute(guardShifts)
+
+	return AsStr(int(gid) * minute)
+}
+
+func Day4Part1(input string) string {
+	// 1. Sort the input by time
+	var lines []string = SplitLines(input)
+	sort.Slice(
+		lines,
+		func(i, j int) bool {
+			return lines[i] < lines[j]
+		},
+	)
+	var guardShifts GuardShifts = getGuardShifts(lines)
 	printShifts(guardShifts)
 	var gwm GuardId = getGuardIdWithMostMinutesAsleep(guardShifts)
 	var theMinute int = getMinuteGuardSleepsMost(guardShifts, gwm)

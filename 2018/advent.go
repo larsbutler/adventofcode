@@ -18,6 +18,7 @@ var solvers = map[string]solutions.Solver {
 	"3-1": solutions.Day3Part1And2,
 	"3-2": solutions.Day3Part1And2,
 	"4-1": solutions.Day4Part1,
+	"4-2": solutions.Day4Part2,
 }
 
 
