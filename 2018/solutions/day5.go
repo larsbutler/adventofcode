@@ -135,14 +135,38 @@ func CollapseReactions(dll *DoubleLinkedList) {
 	}
 }
 
-func Day5Part1(input string) string {
+func loadList(input string) *DoubleLinkedList {
 	var dll *DoubleLinkedList = &DoubleLinkedList{}
 	for _, r := range input {
 		if r != '\n' {
 			dll.AppendValue(r)
 		}
 	}
+	return dll
+}
+
+func Day5Part1(input string) string {
+	var dll *DoubleLinkedList = loadList(input)
 	CollapseReactions(dll)
 	fmt.Println(dll.SPrint())
 	return fmt.Sprintf("Units remaining: %d", dll.size)
+}
+
+func Day5Part2(input string) string {
+	var dll *DoubleLinkedList
+	var minLength int = len(input)
+
+	for i := 65; i <= 90; i++ {
+		var inputCopy string = input
+		// Convert from ascii code to string of single char
+		// Remove all instances of thos chars
+		inputCopy = strings.Replace(inputCopy, string(i), "", -1)
+		inputCopy = strings.Replace(inputCopy, string(i + 32), "", -1)
+		dll = loadList(inputCopy)
+		CollapseReactions(dll)
+		if dll.size < minLength {
+			minLength = dll.size
+		}
+	}
+	return fmt.Sprintf("Min length of polymer: %d", minLength)
 }
